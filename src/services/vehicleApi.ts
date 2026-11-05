@@ -49,9 +49,22 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return body as T;
 }
 
-export async function fetchVehicleBasic(plate: string): Promise<VehicleBasic> {
-  const r = await request<VehicleResponse>(`/api/vehicle?plate=${encodeURIComponent(plate)}`);
-  return r.vehicle;
+/** Requisições em andamento: cliques repetidos na mesma placa reaproveitam a mesma chamada. */
+const inFlight = new Map<string, Promise<unknown>>();
+
+function once<T>(key: string, run: () => Promise<T>): Promise<T> {
+  const pending = inFlight.get(key) as Promise<T> | undefined;
+  if (pending) return pending;
+  const p = run().finally(() => inFlight.delete(key));
+  inFlight.set(key, p);
+  return p;
+}
+
+export function fetchVehicleBasic(plate: string): Promise<VehicleBasic> {
+  return once(`basic:${plate}`, async () => {
+    const r = await request<VehicleResponse>(`/api/vehicle?plate=${encodeURIComponent(plate)}`);
+    return r.vehicle;
+  });
 }
 
 export async function unlockVehicleReport(plate: string, method: PaymentMethod): Promise<UnlockResponse> {
@@ -63,9 +76,11 @@ export async function unlockVehicleReport(plate: string, method: PaymentMethod):
   });
 }
 
-export async function fetchVehicleReport(plate: string, accessToken: string): Promise<AdvancedReport> {
-  const r = await request<ReportResponse>(`/api/report?plate=${encodeURIComponent(plate)}`, {
-    headers: { authorization: `Bearer ${accessToken}` },
+export function fetchVehicleReport(plate: string, accessToken: string): Promise<AdvancedReport> {
+  return once(`report:${plate}`, async () => {
+    const r = await request<ReportResponse>(`/api/report?plate=${encodeURIComponent(plate)}`, {
+      headers: { authorization: `Bearer ${accessToken}` },
+    });
+    return r.report;
   });
-  return r.report;
 }

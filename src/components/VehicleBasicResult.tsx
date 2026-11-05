@@ -14,6 +14,7 @@ import {
   MapPin,
   Palette,
   Receipt,
+  RotateCcw,
   ShieldAlert,
   Siren,
   Users,
@@ -22,7 +23,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { VehicleBasic } from '../../shared/vehicle';
-import { formatBRL, haptic } from '../utils/format';
+import { cn, formatBRL, formatDateTime, haptic } from '../utils/format';
 import { formatPlate } from '../../shared/plateFormatter';
 
 interface Props {
@@ -31,6 +32,10 @@ interface Props {
   onUnlock: () => void;
   onOpenReport: () => void;
   onNewSearch: () => void;
+  /** Quando a consulta foi salva no aparelho. */
+  savedAt: string;
+  refreshing: boolean;
+  onRefresh: () => void;
 }
 
 const LOCKED_ITEMS: { icon: LucideIcon; label: string }[] = [
@@ -44,7 +49,7 @@ const LOCKED_ITEMS: { icon: LucideIcon; label: string }[] = [
   { icon: BadgeCheck, label: 'Aceitação em seguradoras' },
 ];
 
-export default function VehicleBasicResult({ vehicle: v, unlocked, onUnlock, onOpenReport, onNewSearch }: Props) {
+export default function VehicleBasicResult({ vehicle: v, unlocked, onUnlock, onOpenReport, onNewSearch, savedAt, refreshing, onRefresh }: Props) {
   const specs: { icon: LucideIcon; label: string; value: string }[] = [
     { icon: Calendar, label: 'Ano fab./modelo', value: `${v.yearManufacture}/${v.yearModel}` },
     { icon: Palette, label: 'Cor', value: v.color },
@@ -60,9 +65,25 @@ export default function VehicleBasicResult({ vehicle: v, unlocked, onUnlock, onO
 
   return (
     <section className="animate-slide-up space-y-4" aria-label="Resultado da consulta">
-      <button onClick={onNewSearch} className="tap no-print -ml-2 inline-flex min-h-11 items-center gap-1.5 rounded-xl px-2 text-sm font-semibold text-slate-600 hover:bg-slate-100">
-        <ArrowLeft className="h-4 w-4" /> Nova consulta
-      </button>
+      <div className="no-print flex flex-wrap items-center justify-between gap-x-2">
+        <button onClick={onNewSearch} className="tap -ml-2 inline-flex min-h-11 items-center gap-1.5 rounded-xl px-2 text-sm font-semibold text-slate-600 hover:bg-slate-100">
+          <ArrowLeft className="h-4 w-4" /> Nova consulta
+        </button>
+        <div className="flex items-center gap-1 text-xs text-slate-500">
+          <span>Salva em {formatDateTime(savedAt)}</span>
+          <button
+            onClick={() => {
+              haptic();
+              onRefresh();
+            }}
+            disabled={refreshing}
+            className="tap inline-flex min-h-11 items-center gap-1 rounded-xl px-2 font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-60"
+            aria-label="Atualizar dados desta placa"
+          >
+            <RotateCcw className={cn('h-3.5 w-3.5', refreshing && 'animate-spin')} /> {refreshing ? 'Atualizando…' : 'Atualizar'}
+          </button>
+        </div>
+      </div>
 
       {/* Identificação */}
       <div className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200">

@@ -15,6 +15,7 @@ import {
   getCachedRecord,
   getHistory,
   getReceipt,
+  isRecordFresh,
   getUnlocks,
   removeFromHistory,
   removeUnlock,
@@ -23,7 +24,7 @@ import {
   type StoredUnlock,
 } from './services/historyStorage';
 import { ApiError, fetchVehicleBasic, fetchVehicleReport, unlockVehicleReport } from './services/vehicleApi';
-import type { HistoryEntry, PaymentMethod, UnlockReceipt, VehicleBasic } from '../shared/vehicle';
+import type { HistoryEntry, PaymentMethod, UnlockReceipt } from '../shared/vehicle';
 import { cn, haptic } from './utils/format';
 import { formatPlate, normalizePlate } from '../shared/plateFormatter';
 
@@ -40,6 +41,7 @@ export default function App() {
   const [record, setRecord] = useState<CachedRecord | null>(null);
   const [loading, setLoading] = useState(false);
   const [reportLoading, setReportLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>(getHistory);
   const [unlocks, setUnlocks] = useState<Record<string, StoredUnlock>>(getUnlocks);
@@ -87,32 +89,54 @@ export default function App() {
   }, [online, showToast]);
 
   /* ---------- Ações ---------- */
-  async function search(input: string, opts: { openReport?: boolean } = {}) {
+  /**
+   * Busca por placa — CACHE PRIMEIRO:
+   * 1. Se a placa já foi consultada neste aparelho há menos de CLIENT_CACHE_DAYS,
+   *    mostra o que está salvo e NÃO faz nenhuma requisição.
+   * 2. Senão, consulta o servidor (que também tem cache próprio) e salva aqui.
+   * 3. Sem conexão, usa a cópia salva mesmo vencida.
+   * `refresh: true` força ir ao servidor (botão "Atualizar").
+   */
+  async function search(input: string, opts: { openReport?: boolean; refresh?: boolean } = {}) {
     const p = normalizePlate(input);
-    setLoading(true);
+    const cached = getCachedRecord(p);
+
+    if (cached && !opts.refresh && isRecordFresh(cached)) {
+      showRecord(cached, opts.openReport);
+      return;
+    }
+
+    if (opts.refresh) setRefreshing(true);
+    else setLoading(true);
     try {
-      const cached = getCachedRecord(p);
-      let basic: VehicleBasic;
+      let next: CachedRecord;
       try {
-        basic = await fetchVehicleBasic(p);
+        const basic = await fetchVehicleBasic(p);
+        // O laudo pago já baixado é mantido: atualizar não gera nova cobrança
+        next = { basic, advanced: cached?.advanced ?? null, savedAt: new Date().toISOString() };
       } catch (err) {
-        // Sem servidor/conexão: usa os dados salvos neste aparelho, se houver
         if (!cached || (err instanceof ApiError && err.status >= 400 && err.status < 500)) {
           showToast(errorMessage(err));
           return;
         }
-        basic = cached.basic;
-        showToast('Sem conexão com o servidor. Exibindo dados salvos neste aparelho.');
+        next = cached;
+        showToast('Sem conexão com o servidor. Exibindo a consulta salva neste aparelho.');
       }
-      const next: CachedRecord = { basic, advanced: cached?.advanced ?? null };
-      setRecord(next);
-      cacheRecord(p, next);
-      setHistory(addToHistory(basic));
-      if (opts.openReport && getReceipt(p)) await openReport(next);
-      else navigate('search');
+      if (opts.refresh && next !== cached) showToast('Dados atualizados.', 'success');
+      showRecord(next, opts.openReport);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  }
+
+  /** Exibe a consulta, salva no aparelho e move a placa para o topo do histórico (sem duplicar). */
+  function showRecord(rec: CachedRecord, openReportView?: boolean) {
+    setRecord(rec);
+    cacheRecord(rec.basic.plate, rec);
+    setHistory(addToHistory(rec.basic));
+    if (openReportView && getReceipt(rec.basic.plate)) void openReport(rec);
+    else navigate('search');
   }
 
   /** Abre o laudo; busca no backend com o token se ainda não estiver salvo no aparelho. */
@@ -215,6 +239,9 @@ export default function App() {
               onUnlock={() => setCheckoutOpen(true)}
               onOpenReport={() => void openReport()}
               onNewSearch={newSearch}
+              savedAt={record.savedAt}
+              refreshing={refreshing}
+              onRefresh={() => search(record.basic.plate, { refresh: true })}
             />
           ) : (
             <>
