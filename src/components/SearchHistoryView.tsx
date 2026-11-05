@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { ChevronRight, History, LockOpen, Lock, Search, Trash2 } from 'lucide-react';
-import type { HistoryEntry } from '../types/vehicle';
+import type { HistoryEntry } from '../../shared/vehicle';
 import { cn, formatBRL, haptic, relativeTime } from '../utils/format';
-import { formatPlate, normalizePlate } from '../utils/plateFormatter';
+import { formatPlate, normalizePlate } from '../../shared/plateFormatter';
 
 type Filter = 'todos' | 'basico' | 'desbloqueado';
 

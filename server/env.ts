@@ -1,0 +1,60 @@
+/**
+ * Configuração do backend lida das variáveis de ambiente.
+ * Em produção: `vercel env add NOME`. Em desenvolvimento: arquivo `.env.local`.
+ */
+
+function bool(value: string | undefined, fallback: boolean): boolean {
+  if (value === undefined || value === '') return fallback;
+  return ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
+}
+
+function num(value: string | undefined, fallback: number): number {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
+export function getEnv() {
+  const e = process.env;
+  return {
+    /** Provedor de dados veiculares: `mock` (padrão) ou o nome de um adaptador real. */
+    vehicleProvider: (e.VEHICLE_PROVIDER || 'mock').toLowerCase(),
+    providerApiUrl: e.VEHICLE_PROVIDER_API_URL ?? '',
+    providerApiKey: e.VEHICLE_PROVIDER_API_KEY ?? '',
+
+    supabaseUrl: e.SUPABASE_URL ?? '',
+    supabaseServiceRoleKey: e.SUPABASE_SERVICE_ROLE_KEY ?? '',
+
+    /** Validade do cache dos dados básicos (horas). */
+    basicCacheHours: num(e.CACHE_BASIC_TTL_HOURS, 24 * 7),
+    /** Validade do cache do laudo completo (horas). */
+    reportCacheHours: num(e.CACHE_REPORT_TTL_HOURS, 24),
+
+    /** Consultas por minuto por IP. */
+    rateLimitPerMinute: num(e.RATE_LIMIT_PER_MINUTE, 20),
+
+    /**
+     * Enquanto não houver gateway de pagamento, o desbloqueio é simulado.
+     * Desligue (`false`) ao integrar o gateway real.
+     */
+    simulatedPayments: bool(e.SIMULATED_PAYMENTS, true),
+
+    /** Sal para anonimizar IPs nos logs (LGPD). */
+    ipHashSalt: e.IP_HASH_SALT || 'consulta-placa',
+  };
+}
+
+/**
+ * Segredo que assina os tokens de acesso ao laudo. Lido só quando necessário,
+ * para que a busca grátis continue funcionando mesmo sem ele configurado.
+ * Em dev usa um segredo fixo; na Vercel (preview/produção) é obrigatório.
+ */
+export function getAccessTokenSecret(): string {
+  const value = process.env.ACCESS_TOKEN_SECRET;
+  if (value) return value;
+  if (process.env.VERCEL_ENV === 'production' || process.env.VERCEL_ENV === 'preview') {
+    throw new Error('ACCESS_TOKEN_SECRET não configurado. Rode: vercel env add ACCESS_TOKEN_SECRET');
+  }
+  return 'dev-only-secret-nao-use-em-producao';
+}
+
+export type Env = ReturnType<typeof getEnv>;

@@ -18,8 +18,8 @@ import type {
   TheftHistory,
   VehicleBasic,
   VehicleRecord,
-} from '../types/vehicle';
-import { getPlateFormat, normalizePlate } from '../utils/plateFormatter';
+} from './vehicle.js';
+import { getPlateFormat, normalizePlate } from './plateFormatter.js';
 
 /* ============================================================
  * Utilitários determinísticos (mesma placa => mesmos dados)
@@ -397,13 +397,6 @@ const PRESETS: Record<string, VehicleRecord> = {
     }),
   },
 };
-
-export const TEST_PLATES: { plate: string; label: string; hint: string }[] = [
-  { plate: 'BRA2E19', label: 'Corolla Cross', hint: '100% regular' },
-  { plate: 'KRP8214', label: 'Civic', hint: 'Leilão + sinistro' },
-  { plate: 'ONX3A88', label: 'Onix Plus', hint: 'Financiado + IPVA' },
-  { plate: 'HYU7F90', label: 'HB20', hint: 'Roubo recuperado' },
-];
 
 /* ============================================================
  * Gerador dinâmico por hash

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { CircleCheck, FileText, History, Info, Search, WifiOff } from 'lucide-react';
+import { CircleCheck, FileText, History, Info, LoaderCircle, Search, WifiOff } from 'lucide-react';
 import Header, { type View } from './components/Header';
 import PlateSearchBox from './components/PlateSearchBox';
 import VehicleBasicResult from './components/VehicleBasicResult';
@@ -7,20 +7,27 @@ import AdvancedReportView from './components/AdvancedReportView';
 import AdvancedCheckoutModal from './components/AdvancedCheckoutModal';
 import SearchHistoryView from './components/SearchHistoryView';
 import PWAInstallButton from './components/PWAInstallButton';
-import { fetchVehicle } from './data/mockVehicles';
 import { useOnlineStatus } from './hooks/useOnlineStatus';
 import {
   addToHistory,
+  cacheRecord,
   clearHistory,
+  getCachedRecord,
   getHistory,
   getReceipt,
   getUnlocks,
   removeFromHistory,
+  removeUnlock,
   saveUnlock,
+  type CachedRecord,
+  type StoredUnlock,
 } from './services/historyStorage';
-import type { HistoryEntry, UnlockReceipt, VehicleRecord } from './types/vehicle';
+import { ApiError, fetchVehicleBasic, fetchVehicleReport, unlockVehicleReport } from './services/vehicleApi';
+import type { HistoryEntry, PaymentMethod, UnlockReceipt, VehicleBasic } from '../shared/vehicle';
 import { cn, haptic } from './utils/format';
-import { formatPlate, normalizePlate } from './utils/plateFormatter';
+import { formatPlate, normalizePlate } from '../shared/plateFormatter';
+
+const errorMessage = (err: unknown) => (err instanceof Error ? err.message : 'Erro inesperado. Tente novamente.');
 
 interface Toast {
   id: number;
@@ -30,10 +37,12 @@ interface Toast {
 
 export default function App() {
   const [view, setView] = useState<View>('search');
-  const [record, setRecord] = useState<VehicleRecord | null>(null);
+  const [record, setRecord] = useState<CachedRecord | null>(null);
   const [loading, setLoading] = useState(false);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>(getHistory);
-  const [unlocks, setUnlocks] = useState<Record<string, UnlockReceipt>>(getUnlocks);
+  const [unlocks, setUnlocks] = useState<Record<string, StoredUnlock>>(getUnlocks);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
   const online = useOnlineStatus();
@@ -78,16 +87,65 @@ export default function App() {
   }, [online, showToast]);
 
   /* ---------- Ações ---------- */
-  async function search(input: string, opts: { openReport?: boolean; fast?: boolean } = {}) {
+  async function search(input: string, opts: { openReport?: boolean } = {}) {
     const p = normalizePlate(input);
     setLoading(true);
     try {
-      const data = await fetchVehicle(p, opts.fast ? 250 : 900);
-      setRecord(data);
-      setHistory(addToHistory(data.basic));
-      navigate(opts.openReport && unlocks[p] ? 'report' : 'search');
+      const cached = getCachedRecord(p);
+      let basic: VehicleBasic;
+      try {
+        basic = await fetchVehicleBasic(p);
+      } catch (err) {
+        // Sem servidor/conexão: usa os dados salvos neste aparelho, se houver
+        if (!cached || (err instanceof ApiError && err.status >= 400 && err.status < 500)) {
+          showToast(errorMessage(err));
+          return;
+        }
+        basic = cached.basic;
+        showToast('Sem conexão com o servidor. Exibindo dados salvos neste aparelho.');
+      }
+      const next: CachedRecord = { basic, advanced: cached?.advanced ?? null };
+      setRecord(next);
+      cacheRecord(p, next);
+      setHistory(addToHistory(basic));
+      if (opts.openReport && getReceipt(p)) await openReport(next);
+      else navigate('search');
     } finally {
       setLoading(false);
+    }
+  }
+
+  /** Abre o laudo; busca no backend com o token se ainda não estiver salvo no aparelho. */
+  async function openReport(rec: CachedRecord | null = record) {
+    if (!rec) return;
+    const p = rec.basic.plate;
+    const unlock = getReceipt(p);
+    if (!unlock) {
+      setCheckoutOpen(true);
+      return;
+    }
+    navigate('report');
+    if (rec.advanced) return;
+
+    setReportError(null);
+    setReportLoading(true);
+    try {
+      const advanced = await fetchVehicleReport(p, unlock.accessToken);
+      const next = { ...rec, advanced };
+      setRecord(next);
+      cacheRecord(p, next);
+    } catch (err) {
+      if (err instanceof ApiError && err.code === 'unauthorized') {
+        removeUnlock(p);
+        setUnlocks(getUnlocks());
+        setHistory(getHistory());
+        showToast('O acesso a este laudo expirou. Desbloqueie novamente.');
+        navigate('search');
+      } else {
+        setReportError(errorMessage(err));
+      }
+    } finally {
+      setReportLoading(false);
     }
   }
 
@@ -98,17 +156,24 @@ export default function App() {
       showToast('Consulte uma placa primeiro para gerar o laudo.');
       return;
     }
-    if (unlocked) navigate('report');
-    else setCheckoutOpen(true);
+    void openReport();
   }
 
-  function handlePaid(receipt: UnlockReceipt) {
-    saveUnlock(receipt);
+  /** Chamado pelo checkout: libera o laudo no backend (pagamento simulado). */
+  async function confirmUnlock(method: PaymentMethod): Promise<UnlockReceipt> {
+    if (!record) throw new Error('Nenhum veículo selecionado.');
+    const { receipt, accessToken } = await unlockVehicleReport(record.basic.plate, method);
+    saveUnlock({ ...receipt, accessToken });
     setUnlocks(getUnlocks());
     setHistory(getHistory());
+    return receipt;
+  }
+
+  function handleUnlockDone() {
     setCheckoutOpen(false);
-    navigate('report');
-    showToast(`Laudo da placa ${formatPlate(receipt.plate)} desbloqueado!`, 'success');
+    if (!record) return;
+    showToast(`Laudo da placa ${formatPlate(record.basic.plate)} desbloqueado!`, 'success');
+    void openReport();
   }
 
   function goSearch() {
@@ -148,7 +213,7 @@ export default function App() {
               vehicle={record.basic}
               unlocked={unlocked}
               onUnlock={() => setCheckoutOpen(true)}
-              onOpenReport={() => navigate('report')}
+              onOpenReport={() => void openReport()}
               onNewSearch={newSearch}
             />
           ) : (
@@ -163,7 +228,7 @@ export default function App() {
         {view === 'history' && (
           <SearchHistoryView
             history={history}
-            onOpen={(p) => search(p, { openReport: true, fast: true })}
+            onOpen={(p) => search(p, { openReport: true })}
             onRemove={(p) => {
               setHistory(removeFromHistory(p));
               showToast(`Placa ${formatPlate(p)} removida do histórico.`);
@@ -178,7 +243,26 @@ export default function App() {
 
         {view === 'report' &&
           (record && unlocked ? (
-            <AdvancedReportView vehicle={record.basic} report={record.advanced} receipt={getReceipt(record.basic.plate)} onBack={() => navigate('search')} />
+            record.advanced ? (
+              <AdvancedReportView vehicle={record.basic} report={record.advanced} receipt={getReceipt(record.basic.plate)} onBack={() => navigate('search')} />
+            ) : (
+              <section className="animate-fade-in flex flex-col items-center rounded-3xl bg-white px-6 py-14 text-center shadow-sm ring-1 ring-slate-200" role="status">
+                {reportLoading || !reportError ? (
+                  <>
+                    <LoaderCircle className="h-10 w-10 animate-spin text-blue-600" />
+                    <p className="mt-3 font-semibold">Gerando laudo completo…</p>
+                    <p className="text-sm text-slate-500">Consultando sinistros, leilão, gravames e débitos.</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-semibold text-red-700">{reportError}</p>
+                    <button onClick={() => void openReport()} className="tap mt-5 h-12 rounded-xl bg-slate-900 px-5 font-semibold text-white hover:bg-slate-800">
+                      Tentar novamente
+                    </button>
+                  </>
+                )}
+              </section>
+            )
           ) : (
             <section className="animate-slide-up flex flex-col items-center rounded-3xl bg-white px-6 py-14 text-center shadow-sm ring-1 ring-slate-200">
               <FileText className="h-10 w-10 text-slate-300" />
@@ -214,7 +298,7 @@ export default function App() {
         </div>
       </nav>
 
-      {checkoutOpen && record && <AdvancedCheckoutModal vehicle={record.basic} onClose={() => setCheckoutOpen(false)} onPaid={handlePaid} />}
+      {checkoutOpen && record && <AdvancedCheckoutModal vehicle={record.basic} onClose={() => setCheckoutOpen(false)} onConfirm={confirmUnlock} onDone={handleUnlockDone} />}
 
       {/* Toast */}
       {toast && (

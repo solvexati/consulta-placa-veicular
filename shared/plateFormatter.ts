@@ -1,4 +1,4 @@
-import type { PlateFormat } from '../types/vehicle';
+import type { PlateFormat } from './vehicle.js';
 
 /** Placa antiga: ABC1234 | Mercosul: ABC1D23 */
 const PLATE_REGEX = /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/;

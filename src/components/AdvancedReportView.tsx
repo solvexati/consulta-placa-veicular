@@ -27,9 +27,9 @@ import type {
   StructuralStatus,
   UnlockReceipt,
   VehicleBasic,
-} from '../types/vehicle';
+} from '../../shared/vehicle';
 import { cn, formatBRL, formatDate, formatDateTime, haptic } from '../utils/format';
-import { formatPlate } from '../utils/plateFormatter';
+import { formatPlate } from '../../shared/plateFormatter';
 
 interface Props {
   vehicle: VehicleBasic;

@@ -1,12 +1,19 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { apiDevServer } from './dev/apiDevServer.js';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  // Disponibiliza as variáveis do .env.local (sem prefixo VITE_) para as rotas /api em dev.
+  // Elas NÃO vão para o bundle do navegador.
+  Object.assign(process.env, { ...loadEnv(mode, process.cwd(), ''), ...process.env });
+
+  return {
   plugins: [
     react(),
     tailwindcss(),
+    apiDevServer(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
@@ -37,6 +44,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
         navigateFallback: '/index.html',
+        // Rotas da API nunca devem cair no index.html do app
+        navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -61,4 +70,5 @@ export default defineConfig({
       devOptions: { enabled: true, type: 'module' },
     }),
   ],
+  };
 });
