@@ -25,6 +25,14 @@ export function getEnv() {
     /** Novas tentativas em falha de rede / 429 / 5xx (0 = nenhuma). */
     providerRetries: Math.max(0, Math.floor(Number(e.PROVIDER_RETRIES ?? 2)) || 0),
 
+    /** Substituir o valor FIPE do provedor pelo preço oficial atual (BrasilAPI/Parallelum). */
+    fipeEnrich: bool(e.FIPE_ENRICH, true),
+    /** Fontes de preço FIPE, na ordem de tentativa. */
+    fipeSources: (e.FIPE_SOURCES || 'brasilapi,parallelum')
+      .split(',')
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean),
+
     supabaseUrl: e.SUPABASE_URL ?? '',
     supabaseServiceRoleKey: e.SUPABASE_SERVICE_ROLE_KEY ?? '',
 

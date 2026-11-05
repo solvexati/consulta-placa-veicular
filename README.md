@@ -90,6 +90,16 @@ Proteções automáticas para qualquer API:
 - **Trava por placa**: requisições simultâneas da mesma placa geram uma única chamada à API.
 - **Validação de formato**: resposta fora do padrão não é guardada nem enviada ao app.
 
+## Preço FIPE oficial (real e gratuito)
+
+Qualquer provedor (inclusive o mock) tem o valor FIPE substituído pelo **preço oficial do mês**,
+consultado pelo código FIPE + ano-modelo (`server/providers/withRealFipe.ts`).
+
+- Fontes em `server/fipe/`: **BrasilAPI** e **Parallelum** (FIPE API). Se uma estiver fora do ar, usa a outra.
+- Se todas falharem, a consulta segue com o valor do provedor (não quebra).
+- Configuração: `FIPE_ENRICH=true` e `FIPE_SOURCES=brasilapi,parallelum`.
+- O resultado entra no cache do servidor, então cada placa consulta a FIPE uma vez por período.
+
 ## Relatório de uso da API
 
 No SQL Editor do Supabase:

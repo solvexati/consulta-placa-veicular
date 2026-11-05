@@ -10,6 +10,7 @@ export const GET = route(async () => {
     status: 'ok',
     provider: env.vehicleProvider,
     store: getStore().kind,
+    fipe: env.fipeEnrich ? env.fipeSources : [],
     simulatedPayments: env.simulatedPayments,
     time: new Date().toISOString(),
   };

@@ -95,28 +95,30 @@ interface CatalogModel {
   base: number;
   wmi: string;
   minYear: number;
+  /** Código FIPE real da versão (preço oficial consultado pela API FIPE). */
+  fipeCode: string;
 }
 
 const CATALOG: CatalogModel[] = [
-  { brand: 'Fiat', model: 'Strada', versions: ['Freedom 1.3 CS', 'Volcano 1.3 CD', 'Ranch 1.0 Turbo CD'], category: 'Picape', engine: '1.3', power: '107 cv', transmission: 'Manual 5 marchas', fuel: 'Flex', base: 118000, wmi: '9BD', minYear: 2014 },
-  { brand: 'Fiat', model: 'Argo', versions: ['Drive 1.0', 'Trekking 1.3', 'Drive 1.3 CVT'], category: 'Hatch', engine: '1.0', power: '75 cv', transmission: 'Manual 5 marchas', fuel: 'Flex', base: 89000, wmi: '9BD', minYear: 2018 },
-  { brand: 'Fiat', model: 'Toro', versions: ['Freedom 1.3 Turbo', 'Volcano 2.2 Diesel 4x4', 'Ultra 2.2 Diesel'], category: 'Picape', engine: '1.3 Turbo', power: '185 cv', transmission: 'Automático 6 marchas', fuel: 'Flex', base: 172000, wmi: '988', minYear: 2017 },
-  { brand: 'Jeep', model: 'Compass', versions: ['Sport T270', 'Longitude T270', 'Limited TD350 4x4'], category: 'SUV', engine: '1.3 Turbo', power: '185 cv', transmission: 'Automático 6 marchas', fuel: 'Flex', base: 199000, wmi: '988', minYear: 2017 },
-  { brand: 'Jeep', model: 'Renegade', versions: ['Sport T270', 'Longitude T270', 'Trailhawk 4x4'], category: 'SUV', engine: '1.3 Turbo', power: '185 cv', transmission: 'Automático 6 marchas', fuel: 'Flex', base: 149000, wmi: '988', minYear: 2016 },
-  { brand: 'Volkswagen', model: 'Polo', versions: ['MPI 1.0', 'Highline 200 TSI', 'GTS 250 TSI'], category: 'Hatch', engine: '1.0 TSI', power: '116 cv', transmission: 'Automático 6 marchas', fuel: 'Flex', base: 104000, wmi: '9BW', minYear: 2018 },
-  { brand: 'Volkswagen', model: 'T-Cross', versions: ['200 TSI', 'Comfortline 200 TSI', 'Highline 250 TSI'], category: 'SUV', engine: '1.0 TSI', power: '116 cv', transmission: 'Automático 6 marchas', fuel: 'Flex', base: 149000, wmi: '9BW', minYear: 2019 },
-  { brand: 'Volkswagen', model: 'Nivus', versions: ['Comfortline 200 TSI', 'Highline 200 TSI'], category: 'SUV', engine: '1.0 TSI', power: '128 cv', transmission: 'Automático 6 marchas', fuel: 'Flex', base: 139000, wmi: '9BW', minYear: 2021 },
-  { brand: 'Chevrolet', model: 'Tracker', versions: ['LT 1.0 Turbo', 'Premier 1.2 Turbo', 'RS 1.2 Turbo'], category: 'SUV', engine: '1.2 Turbo', power: '133 cv', transmission: 'Automático 6 marchas', fuel: 'Flex', base: 152000, wmi: '9BG', minYear: 2020 },
-  { brand: 'Chevrolet', model: 'Onix', versions: ['LT 1.0', 'LTZ 1.0 Turbo', 'Premier 1.0 Turbo'], category: 'Hatch', engine: '1.0 Turbo', power: '116 cv', transmission: 'Automático 6 marchas', fuel: 'Flex', base: 99000, wmi: '9BG', minYear: 2015 },
-  { brand: 'Hyundai', model: 'Creta', versions: ['Comfort 1.0 TGDI', 'Limited 1.0 TGDI', 'Ultimate 2.0'], category: 'SUV', engine: '1.0 Turbo', power: '120 cv', transmission: 'Automático 6 marchas', fuel: 'Flex', base: 156000, wmi: '9BH', minYear: 2017 },
-  { brand: 'Renault', model: 'Kwid', versions: ['Zen 1.0', 'Intense 1.0', 'Outsider 1.0'], category: 'Hatch', engine: '1.0', power: '71 cv', transmission: 'Manual 5 marchas', fuel: 'Flex', base: 72000, wmi: '93Y', minYear: 2018 },
-  { brand: 'Nissan', model: 'Kicks', versions: ['Sense 1.6', 'Advance 1.6 CVT', 'Exclusive 1.0 Turbo'], category: 'SUV', engine: '1.6', power: '114 cv', transmission: 'CVT', fuel: 'Flex', base: 132000, wmi: '94D', minYear: 2017 },
-  { brand: 'Toyota', model: 'Hilux', versions: ['SR 2.8 Diesel 4x4', 'SRV 2.8 Diesel 4x4', 'SRX Plus 2.8 Diesel'], category: 'Picape', engine: '2.8 Turbo Diesel', power: '204 cv', transmission: 'Automático 6 marchas', fuel: 'Diesel', base: 298000, wmi: '8AJ', minYear: 2014 },
-  { brand: 'Toyota', model: 'Yaris', versions: ['XL 1.5 CVT', 'XLS 1.5 CVT'], category: 'Sedã', engine: '1.5', power: '110 cv', transmission: 'CVT', fuel: 'Flex', base: 112000, wmi: '9BR', minYear: 2019 },
-  { brand: 'Ford', model: 'Ranger', versions: ['XLS 2.0 Diesel 4x4', 'XLT 2.0 Diesel', 'Limited V6 3.0 Diesel'], category: 'Picape', engine: '2.0 Turbo Diesel', power: '170 cv', transmission: 'Automático 10 marchas', fuel: 'Diesel', base: 285000, wmi: '8AF', minYear: 2014 },
-  { brand: 'BYD', model: 'Song Plus', versions: ['DM-i 1.5 Híbrido Plug-in'], category: 'SUV', engine: '1.5 + motor elétrico', power: '235 cv', transmission: 'Automático e-CVT', fuel: 'Híbrido', base: 239000, wmi: 'LGX', minYear: 2023 },
-  { brand: 'BYD', model: 'Dolphin', versions: ['EV 95 cv', 'Plus EV 204 cv'], category: 'Hatch', engine: 'Elétrico', power: '95 cv', transmission: 'Automático (redução única)', fuel: 'Elétrico', base: 149000, wmi: 'LGX', minYear: 2023 },
-  { brand: 'Honda', model: 'HR-V', versions: ['EX 1.5', 'EXL 1.5', 'Advance 1.5 Turbo'], category: 'SUV', engine: '1.5', power: '126 cv', transmission: 'CVT', fuel: 'Flex', base: 159000, wmi: '93H', minYear: 2016 },
+  { brand: 'Fiat', model: 'Strada', versions: ['Freedom 1.3 CS Plus'], category: 'Picape', engine: '1.3', power: '107 cv', transmission: 'Manual 5 marchas', fuel: 'Flex', base: 118000, wmi: '9BD', minYear: 2021, fipeCode: '001527-0' },
+  { brand: 'Fiat', model: 'Argo', versions: ['Drive 1.0'], category: 'Hatch', engine: '1.0', power: '75 cv', transmission: 'Manual 5 marchas', fuel: 'Flex', base: 89000, wmi: '9BD', minYear: 2018, fipeCode: '001494-0' },
+  { brand: 'Fiat', model: 'Toro', versions: ['Freedom 1.3 T270 Aut.'], category: 'Picape', engine: '1.3 Turbo', power: '185 cv', transmission: 'Automático 6 marchas', fuel: 'Flex', base: 172000, wmi: '988', minYear: 2022, fipeCode: '001538-5' },
+  { brand: 'Jeep', model: 'Compass', versions: ['Longitude T270 1.3 Turbo'], category: 'SUV', engine: '1.3 Turbo', power: '185 cv', transmission: 'Automático 6 marchas', fuel: 'Flex', base: 199000, wmi: '988', minYear: 2022, fipeCode: '017071-2' },
+  { brand: 'Jeep', model: 'Renegade', versions: ['Longitude T270 1.3 Turbo'], category: 'SUV', engine: '1.3 Turbo', power: '185 cv', transmission: 'Automático 6 marchas', fuel: 'Flex', base: 149000, wmi: '988', minYear: 2022, fipeCode: '017108-5' },
+  { brand: 'Volkswagen', model: 'Polo', versions: ['Highline 200 TSI'], category: 'Hatch', engine: '1.0 TSI', power: '116 cv', transmission: 'Automático 6 marchas', fuel: 'Flex', base: 104000, wmi: '9BW', minYear: 2018, fipeCode: '005476-3' },
+  { brand: 'Volkswagen', model: 'T-Cross', versions: ['Highline 250 TSI'], category: 'SUV', engine: '1.0 TSI', power: '116 cv', transmission: 'Automático 6 marchas', fuel: 'Flex', base: 149000, wmi: '9BW', minYear: 2020, fipeCode: '005508-5' },
+  { brand: 'Volkswagen', model: 'Nivus', versions: ['Highline 200 TSI'], category: 'SUV', engine: '1.0 TSI', power: '128 cv', transmission: 'Automático 6 marchas', fuel: 'Flex', base: 139000, wmi: '9BW', minYear: 2021, fipeCode: '005526-3' },
+  { brand: 'Chevrolet', model: 'Tracker', versions: ['Premier 1.2 Turbo'], category: 'SUV', engine: '1.2 Turbo', power: '133 cv', transmission: 'Automático 6 marchas', fuel: 'Flex', base: 152000, wmi: '9BG', minYear: 2021, fipeCode: '004525-0' },
+  { brand: 'Chevrolet', model: 'Onix', versions: ['LTZ 1.0 Turbo'], category: 'Hatch', engine: '1.0 Turbo', power: '116 cv', transmission: 'Automático 6 marchas', fuel: 'Flex', base: 99000, wmi: '9BG', minYear: 2020, fipeCode: '004515-2' },
+  { brand: 'Hyundai', model: 'Creta', versions: ['Limited 1.0 TGDI'], category: 'SUV', engine: '1.0 Turbo', power: '120 cv', transmission: 'Automático 6 marchas', fuel: 'Flex', base: 156000, wmi: '9BH', minYear: 2022, fipeCode: '015203-0' },
+  { brand: 'Renault', model: 'Kwid', versions: ['Zen 1.0'], category: 'Hatch', engine: '1.0', power: '71 cv', transmission: 'Manual 5 marchas', fuel: 'Flex', base: 72000, wmi: '93Y', minYear: 2018, fipeCode: '025266-2' },
+  { brand: 'Nissan', model: 'Kicks', versions: ['Advance 1.6 CVT'], category: 'SUV', engine: '1.6', power: '114 cv', transmission: 'CVT', fuel: 'Flex', base: 132000, wmi: '94D', minYear: 2021, fipeCode: '023180-0' },
+  { brand: 'Toyota', model: 'Hilux', versions: ['SRV 2.8 Diesel 4x4'], category: 'Picape', engine: '2.8 Turbo Diesel', power: '204 cv', transmission: 'Automático 6 marchas', fuel: 'Diesel', base: 298000, wmi: '8AJ', minYear: 2016, fipeCode: '002143-1' },
+  { brand: 'Toyota', model: 'Yaris', versions: ['XLS 1.5 CVT'], category: 'Sedã', engine: '1.5', power: '110 cv', transmission: 'CVT', fuel: 'Flex', base: 112000, wmi: '9BR', minYear: 2019, fipeCode: '002174-1' },
+  { brand: 'Ford', model: 'Ranger', versions: ['XLS 2.0 Diesel'], category: 'Picape', engine: '2.0 Turbo Diesel', power: '170 cv', transmission: 'Automático 10 marchas', fuel: 'Diesel', base: 285000, wmi: '8AF', minYear: 2024, fipeCode: '003499-1' },
+  { brand: 'BYD', model: 'Song Plus', versions: ['DM-i 1.5 Híbrido Plug-in'], category: 'SUV', engine: '1.5 + motor elétrico', power: '235 cv', transmission: 'Automático e-CVT', fuel: 'Híbrido', base: 239000, wmi: 'LGX', minYear: 2023, fipeCode: '095005-0' },
+  { brand: 'BYD', model: 'Dolphin', versions: ['EV GS'], category: 'Hatch', engine: 'Elétrico', power: '95 cv', transmission: 'Automático (redução única)', fuel: 'Elétrico', base: 149000, wmi: 'LGX', minYear: 2023, fipeCode: '095007-6' },
+  { brand: 'Honda', model: 'HR-V', versions: ['EXL 1.5'], category: 'SUV', engine: '1.5', power: '126 cv', transmission: 'CVT', fuel: 'Flex', base: 159000, wmi: '93H', minYear: 2023, fipeCode: '014110-0' },
 ];
 
 const COLORS = ['Branco', 'Prata', 'Preto', 'Cinza', 'Vermelho', 'Azul', 'Branco Perolizado', 'Grafite'];
@@ -242,10 +244,10 @@ const PRESETS: Record<string, VehicleRecord> = {
   BRA2E19: {
     basic: {
       plate: 'BRA2E19', plateFormat: 'mercosul', brand: 'Toyota', model: 'Corolla Cross',
-      version: 'XRX 2.0 Hybrid', category: 'SUV', yearManufacture: 2024, yearModel: 2024,
+      version: 'XRX 1.8 Hybrid', category: 'SUV', yearManufacture: 2024, yearModel: 2024,
       color: 'Branco Perolizado', fuel: 'Híbrido', engine: '1.8 + motor elétrico', power: '122 cv (combinada)',
       transmission: 'Automático e-CVT', city: 'São Paulo', uf: 'SP',
-      chassisMasked: '9BR********318842', renavamMasked: '01*****6721', fipeCode: '002197-4',
+      chassisMasked: '9BR********318842', renavamMasked: '01*****6721', fipeCode: '002204-7',
       fipeValue: 189450, fipeReference: FIPE_REFERENCE,
     },
     advanced: finalize({
@@ -271,7 +273,7 @@ const PRESETS: Record<string, VehicleRecord> = {
       version: 'Touring 1.5 Turbo', category: 'Sedã', yearManufacture: 2019, yearModel: 2020,
       color: 'Cinza', fuel: 'Gasolina', engine: '1.5 Turbo', power: '173 cv',
       transmission: 'CVT', city: 'Campinas', uf: 'SP',
-      chassisMasked: '93H********702215', renavamMasked: '11*****0384', fipeCode: '014094-9',
+      chassisMasked: '93H********702215', renavamMasked: '11*****0384', fipeCode: '014089-9',
       fipeValue: 128900, fipeReference: FIPE_REFERENCE,
     },
     advanced: finalize({
@@ -321,7 +323,7 @@ const PRESETS: Record<string, VehicleRecord> = {
       version: 'Premier 1.0 Turbo', category: 'Sedã', yearManufacture: 2023, yearModel: 2024,
       color: 'Vermelho', fuel: 'Flex', engine: '1.0 Turbo', power: '116 cv',
       transmission: 'Automático 6 marchas', city: 'Belo Horizonte', uf: 'MG',
-      chassisMasked: '9BG********104477', renavamMasked: '13*****9902', fipeCode: '004478-8',
+      chassisMasked: '9BG********104477', renavamMasked: '13*****9902', fipeCode: '004504-7',
       fipeValue: 104300, fipeReference: FIPE_REFERENCE,
     },
     advanced: finalize({
@@ -359,7 +361,7 @@ const PRESETS: Record<string, VehicleRecord> = {
       version: 'Platinum 1.0 TGDI', category: 'Hatch', yearManufacture: 2022, yearModel: 2023,
       color: 'Prata', fuel: 'Flex', engine: '1.0 Turbo', power: '120 cv',
       transmission: 'Automático 6 marchas', city: 'Rio de Janeiro', uf: 'RJ',
-      chassisMasked: '9BH********551096', renavamMasked: '12*****4418', fipeCode: '015186-0',
+      chassisMasked: '9BH********551096', renavamMasked: '12*****4418', fipeCode: '015209-9',
       fipeValue: 86750, fipeReference: FIPE_REFERENCE,
     },
     advanced: finalize({
@@ -429,7 +431,7 @@ function generateVehicle(plate: string): VehicleRecord {
     uf: loc.uf,
     chassisMasked: `${m.wmi}********${digits(rng, 6)}`,
     renavamMasked: `${digits(rng, 2)}*****${digits(rng, 4)}`,
-    fipeCode: `${digits(rng, 6)}-${int(rng, 0, 9)}`,
+    fipeCode: m.fipeCode,
     fipeValue,
     fipeReference: FIPE_REFERENCE,
   };

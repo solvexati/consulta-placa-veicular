@@ -58,6 +58,8 @@ export interface HealthResponse {
   status: 'ok';
   provider: string;
   store: 'supabase' | 'memory';
+  /** Fontes de preço FIPE oficial ativas (vazio = desligado). */
+  fipe: string[];
   simulatedPayments: boolean;
   time: string;
 }
