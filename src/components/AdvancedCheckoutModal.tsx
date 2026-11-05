@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import QRCode from 'qrcode';
 import { Check, CircleCheck, Clock, Copy, CreditCard, Info, LoaderCircle, Lock, QrCode, X } from 'lucide-react';
-import type { PaymentMethod, UnlockReceipt, VehicleBasic } from '../types/vehicle';
+import type { PaymentMethod, UnlockReceipt, VehicleBasic } from '../../shared/vehicle';
 import { cn, formatBRL, haptic } from '../utils/format';
-import { formatPlate } from '../utils/plateFormatter';
+import { formatPlate } from '../../shared/plateFormatter';
 
 export const ADVANCED_PRICE = 35;
 const PIX_EXPIRATION_S = 10 * 60;
@@ -11,7 +11,10 @@ const PIX_EXPIRATION_S = 10 * 60;
 interface Props {
   vehicle: VehicleBasic;
   onClose: () => void;
-  onPaid: (receipt: UnlockReceipt) => void;
+  /** Confirma o pagamento no backend e devolve o recibo (lança erro se falhar). */
+  onConfirm: (method: PaymentMethod) => Promise<UnlockReceipt>;
+  /** Usuário clicou em "Ver laudo completo" após a aprovação. */
+  onDone: () => void;
 }
 
 /* ------------------------------------------------------------------
@@ -100,10 +103,11 @@ function validExpiry(v: string): boolean {
 
 type Step = 'form' | 'processing' | 'success';
 
-export default function AdvancedCheckoutModal({ vehicle, onClose, onPaid }: Props) {
+export default function AdvancedCheckoutModal({ vehicle, onClose, onConfirm, onDone }: Props) {
   const [method, setMethod] = useState<PaymentMethod>('pix');
   const [step, setStep] = useState<Step>('form');
   const receiptRef = useRef<UnlockReceipt | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Fecha com ESC e trava o scroll do fundo
   useEffect(() => {
@@ -117,19 +121,18 @@ export default function AdvancedCheckoutModal({ vehicle, onClose, onPaid }: Prop
     };
   }, [onClose, step]);
 
-  function confirmPayment(m: PaymentMethod, transactionId: string) {
+  async function confirmPayment(m: PaymentMethod) {
+    setError(null);
     setStep('processing');
-    setTimeout(() => {
-      receiptRef.current = {
-        plate: vehicle.plate,
-        method: m,
-        amount: ADVANCED_PRICE,
-        transactionId,
-        paidAt: new Date().toISOString(),
-      };
+    try {
+      receiptRef.current = await onConfirm(m);
       haptic(40);
       setStep('success');
-    }, 1800);
+    } catch (err) {
+      haptic(30);
+      setError(err instanceof Error ? err.message : 'Não foi possível confirmar o pagamento.');
+      setStep('form');
+    }
   }
 
   return (
@@ -192,7 +195,11 @@ export default function AdvancedCheckoutModal({ vehicle, onClose, onPaid }: Prop
                 ))}
               </div>
 
-              {method === 'pix' ? <PixPanel onConfirm={(tx) => confirmPayment('pix', tx)} /> : <CardPanel onConfirm={(tx) => confirmPayment('cartao', tx)} />}
+              {error && (
+                <p role="alert" className="mb-4 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700 ring-1 ring-red-200 ring-inset">{error}</p>
+              )}
+
+              {method === 'pix' ? <PixPanel onConfirm={() => confirmPayment('pix')} /> : <CardPanel onConfirm={() => confirmPayment('cartao')} />}
 
               <p className="mt-4 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-xs text-amber-800">
                 <Info className="mt-0.5 h-4 w-4 shrink-0" />
@@ -218,7 +225,7 @@ export default function AdvancedCheckoutModal({ vehicle, onClose, onPaid }: Prop
               <p className="mt-1 text-sm text-slate-500">O laudo completo foi liberado e ficará salvo no seu histórico.</p>
               <p className="mt-3 font-mono text-xs text-slate-400">Transação {receiptRef.current?.transactionId}</p>
               <button
-                onClick={() => receiptRef.current && onPaid(receiptRef.current)}
+                onClick={onDone}
                 className="tap mt-6 h-14 w-full rounded-2xl bg-emerald-600 font-bold text-white hover:bg-emerald-700"
               >
                 Ver laudo completo

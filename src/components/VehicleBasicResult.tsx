@@ -21,9 +21,9 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
-import type { VehicleBasic } from '../types/vehicle';
+import type { VehicleBasic } from '../../shared/vehicle';
 import { formatBRL, haptic } from '../utils/format';
-import { formatPlate } from '../utils/plateFormatter';
+import { formatPlate } from '../../shared/plateFormatter';
 
 interface Props {
   vehicle: VehicleBasic;

@@ -1,8 +1,8 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { LoaderCircle, Search, Sparkles } from 'lucide-react';
-import { TEST_PLATES } from '../data/mockVehicles';
+import { TEST_PLATES } from '../../shared/testPlates';
 import { cn, haptic } from '../utils/format';
-import { formatPlate, getPlateFormat, maskPlateInput, plateValidationMessage } from '../utils/plateFormatter';
+import { formatPlate, getPlateFormat, maskPlateInput, plateValidationMessage } from '../../shared/plateFormatter';
 
 interface Props {
   loading: boolean;
