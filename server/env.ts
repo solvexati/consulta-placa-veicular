@@ -20,6 +20,10 @@ export function getEnv() {
     vehicleProvider: (e.VEHICLE_PROVIDER || 'mock').toLowerCase(),
     providerApiUrl: e.VEHICLE_PROVIDER_API_URL ?? '',
     providerApiKey: e.VEHICLE_PROVIDER_API_KEY ?? '',
+    /** Tempo máximo de espera por resposta da API (ms). */
+    providerTimeoutMs: num(e.PROVIDER_TIMEOUT_MS, 15_000),
+    /** Novas tentativas em falha de rede / 429 / 5xx (0 = nenhuma). */
+    providerRetries: Math.max(0, Math.floor(Number(e.PROVIDER_RETRIES ?? 2)) || 0),
 
     supabaseUrl: e.SUPABASE_URL ?? '',
     supabaseServiceRoleKey: e.SUPABASE_SERVICE_ROLE_KEY ?? '',

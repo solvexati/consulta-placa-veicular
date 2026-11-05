@@ -11,9 +11,22 @@ import type { CacheKind, CachedEntry, Store } from './types.js';
 export function createMemoryStore(): Store {
   const cache = new Map<string, CachedEntry<unknown>>();
   const unlocks = new Map<string, UnlockReceipt & { plate: string }>();
+  const locks = new Map<string, number>(); // chave → expira em (ms)
 
   return {
     kind: 'memory',
+
+    async acquireFetchLock(plate, kind, ttlSeconds) {
+      const key = `${kind}:${plate}`;
+      const until = locks.get(key);
+      if (until && until > Date.now()) return false;
+      locks.set(key, Date.now() + ttlSeconds * 1000);
+      return true;
+    },
+
+    async releaseFetchLock(plate, kind) {
+      locks.delete(`${kind}:${plate}`);
+    },
 
     async getCached<T>(plate: string, kind: CacheKind, maxAgeMs: number) {
       const entry = cache.get(`${kind}:${plate}`);

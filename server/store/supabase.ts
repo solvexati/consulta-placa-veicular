@@ -82,10 +82,25 @@ export function createSupabaseStore(url: string, serviceRoleKey: string): Store 
       return data ? toReceipt(data as UnlockRow) : null;
     },
 
+    async acquireFetchLock(plate, kind, ttlSeconds) {
+      const { data, error } = await db.rpc('try_acquire_fetch_lock', { p_plate: plate, p_kind: kind, p_ttl_seconds: ttlSeconds });
+      if (error) {
+        // Sem trava, o pior caso é uma chamada duplicada à API — não bloqueia o usuário
+        console.warn('[store] falha ao obter trava', error.message);
+        return true;
+      }
+      return data === true;
+    },
+
+    async releaseFetchLock(plate, kind) {
+      const { error } = await db.rpc('release_fetch_lock', { p_plate: plate, p_kind: kind });
+      if (error) console.warn('[store] falha ao liberar trava', error.message);
+    },
+
     async logLookup(log) {
       const { error } = await db
         .from('lookup_logs')
-        .insert({ plate: log.plate, kind: log.kind, source: log.source, ip_hash: log.ipHash });
+        .insert({ plate: log.plate, kind: log.kind, source: log.source, provider: log.provider, ip_hash: log.ipHash });
       if (error) console.warn('[store] falha ao gravar log de consulta', error.message);
     },
   };

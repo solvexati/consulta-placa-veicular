@@ -34,6 +34,7 @@ npm run typecheck  # checa tipos do app e do servidor
 npm run build      # build de produção
 npm run preview    # serve o build em http://localhost:4173 (sem /api)
 npm run icons      # regenera os PNGs do PWA a partir de public/icon.svg
+npm run provider:check  # valida o adaptador da API (formato da resposta)
 ```
 
 Variáveis de ambiente: veja `.env.example`. Em desenvolvimento nada é obrigatório.
@@ -61,22 +62,40 @@ Limite: 20 requisições/minuto por IP em cada rota (`RATE_LIMIT_PER_MINUTE`).
 Sem Supabase o backend usa memória: funciona, mas **não guarda cache nem registro de desbloqueios**
 entre execuções (cada rota da Vercel é uma função separada).
 
-1. Crie um projeto no Supabase e rode `supabase/migrations/0001_backend_schema.sql`.
+1. Crie um projeto no Supabase e rode os arquivos de `supabase/migrations/` em ordem.
 2. Defina `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` (Vercel e `.env.local`).
 3. `GET /api/health` deve responder `"store": "supabase"`.
 
 Tabelas: `vehicle_cache` (cache do provedor), `unlocks` (laudos liberados, só o hash do token),
-`lookup_logs` (consultas com IP anonimizado). RLS ativo e sem policies públicas.
+`lookup_logs` (consultas com IP anonimizado e provedor), `fetch_locks` (trava por placa).
+View `api_usage_daily` (economia do cache). RLS ativo e sem policies públicas.
 
-## Plugando a API paga
+## Plugando (ou trocando) a API paga
 
-1. Crie `server/providers/<nome>.ts` implementando `VehicleProvider` (ver `server/providers/types.ts`),
-   convertendo a resposta da API para `VehicleBasic` e `AdvancedReport` (`shared/vehicle.ts`).
-2. Registre em `server/providers/index.ts`.
-3. Defina `VEHICLE_PROVIDER=<nome>`, `VEHICLE_PROVIDER_API_URL` e `VEHICLE_PROVIDER_API_KEY`.
+Toda API entra por **um único arquivo** (adaptador). O resto do sistema não muda.
 
-A chave da API fica só no servidor. O cache evita pagar duas vezes pela mesma placa
-(`CACHE_BASIC_TTL_HOURS`, `CACHE_REPORT_TTL_HOURS`).
+1. Copie `server/providers/template.ts` para `server/providers/<nome>.ts`.
+2. Escolha o modo:
+   - `split`: a API tem consulta básica e completa separadas (`getBasic` + `getReport`);
+   - `full`: uma chamada devolve tudo (`getFull`). O backend guarda básico + laudo juntos,
+     então o laudo depois sai do cache sem nova cobrança.
+3. Use `providerRequest` (`server/providers/httpClient.ts`): timeout, novas tentativas e logs sem a chave.
+4. Converta a resposta para `VehicleBasic` / `AdvancedReport` (`shared/vehicle.ts`).
+5. Registre em `server/providers/index.ts` e defina `VEHICLE_PROVIDER=<nome>`,
+   `VEHICLE_PROVIDER_API_URL` e `VEHICLE_PROVIDER_API_KEY`.
+6. Valide: `npm run provider:check -- ABC1D23` (cada placa testada é uma consulta cobrada).
+
+Proteções automáticas para qualquer API:
+- **Cache no servidor** compartilhado por todos os usuários (Supabase).
+- **Trava por placa**: requisições simultâneas da mesma placa geram uma única chamada à API.
+- **Validação de formato**: resposta fora do padrão não é guardada nem enviada ao app.
+
+## Relatório de uso da API
+
+No SQL Editor do Supabase:
+```sql
+select * from api_usage_daily;  -- chamadas à API x respostas do cache, por dia
+```
 
 ## Placas de teste (provedor mock)
 
