@@ -39,7 +39,8 @@ export function getEnv() {
     supabasePublishableKey: e.SUPABASE_PUBLISHABLE_KEY || e.VITE_SUPABASE_PUBLISHABLE_KEY || '',
 
     /** Exigir login Google em todas as rotas de consulta (padrão: true). */
-    authRequired: bool(e.AUTH_REQUIRED, true),
+    //  (desligado automaticamente enquanto a chave pública não estiver configurada)
+    authRequired: bool(e.AUTH_REQUIRED, true) && Boolean(e.SUPABASE_PUBLISHABLE_KEY || e.VITE_SUPABASE_PUBLISHABLE_KEY),
 
     /** Validade do cache dos dados básicos (horas). */
     basicCacheHours: num(e.CACHE_BASIC_TTL_HOURS, 24 * 7),

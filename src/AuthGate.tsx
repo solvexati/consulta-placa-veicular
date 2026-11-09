@@ -1,13 +1,20 @@
 import { LoaderCircle } from 'lucide-react';
 import App from './App';
+import { isAuthConfigured } from './config';
 import LoginScreen from './components/LoginScreen';
 import { useAuth } from './hooks/useAuth';
 import { signOut } from './services/auth';
 import { clearLocalData } from './services/historyStorage';
 
-/** O app só abre com login Google. Sem sessão, mostra a tela de entrada. */
+/**
+ * O app só abre com login Google. Sem sessão, mostra a tela de entrada.
+ * Enquanto a chave pública do Supabase não estiver configurada (VITE_SUPABASE_PUBLISHABLE_KEY),
+ * o login fica desligado e o app abre direto — ele liga sozinho quando a chave for cadastrada.
+ */
 export default function AuthGate() {
   const { loading, user, error } = useAuth();
+
+  if (!isAuthConfigured) return <App user={null} onSignOut={() => {}} />;
 
   if (loading) {
     return (

@@ -38,7 +38,7 @@ interface Toast {
 }
 
 interface AppProps {
-  user: AuthUser;
+  user: AuthUser | null;
   onSignOut: () => void;
 }
 
