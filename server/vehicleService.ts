@@ -9,35 +9,45 @@ import { getVehicleData } from './vehicleData.js';
 
 export const ADVANCED_PRICE_CENTS = 3500;
 
-export async function getVehicleBasic(plate: string, ipHash: string): Promise<VehicleResponse> {
+/** Quem fez a requisição (para logs e para vincular laudos à conta). */
+export interface RequestContext {
+  ipHash: string;
+  userId: string | null;
+}
+
+export async function getVehicleBasic(plate: string, ctx: RequestContext): Promise<VehicleResponse> {
   const r = await getVehicleData(plate, 'basic');
-  await getStore().logLookup({ plate, kind: 'basic', source: r.source, provider: r.provider, ipHash });
+  await getStore().logLookup({ plate, kind: 'basic', source: r.source, provider: r.provider, ...ctx });
   return { vehicle: r.data, source: r.source, provider: r.provider, fetchedAt: r.fetchedAt };
 }
 
-export async function getVehicleReport(plate: string, accessToken: string | null, ipHash: string): Promise<ReportResponse> {
-  if (!accessToken) throw new HttpError(401, 'unauthorized', 'Laudo bloqueado. Desbloqueie para ter acesso.');
-  const payload = verifyAccessToken(accessToken);
+export async function getVehicleReport(plate: string, reportToken: string | null, ctx: RequestContext): Promise<ReportResponse> {
+  if (!reportToken) throw new HttpError(401, 'unauthorized', 'Laudo bloqueado. Desbloqueie para ter acesso.');
+  const payload = verifyAccessToken(reportToken);
   if (!payload || payload.plate !== plate) {
     throw new HttpError(401, 'unauthorized', 'Acesso ao laudo inválido para esta placa.');
   }
   // Com banco de dados, confere também o registro (permite revogar em caso de estorno)
   const store = getStore();
-  if (store.kind === 'supabase' && !(await store.findUnlock(plate, sha256(accessToken)))) {
+  if (store.kind === 'supabase' && !(await store.findUnlock(plate, sha256(reportToken)))) {
     throw new HttpError(401, 'unauthorized', 'Acesso ao laudo revogado ou não encontrado.');
   }
 
   const r = await getVehicleData(plate, 'report');
-  await store.logLookup({ plate, kind: 'report', source: r.source, provider: r.provider, ipHash });
+  await store.logLookup({ plate, kind: 'report', source: r.source, provider: r.provider, ...ctx });
   return { plate, report: r.data, source: r.source, provider: r.provider, fetchedAt: r.fetchedAt };
 }
 
 /**
- * Libera o laudo de uma placa e devolve o token de acesso.
- * Por enquanto o pagamento é SIMULADO — quando o gateway for integrado, este
- * fluxo passa a ser disparado pelo webhook de confirmação do pagamento.
+ * Libera o laudo de uma placa para o usuário e devolve o token de acesso.
+ * Por enquanto o pagamento é SIMULADO — quando o PIX for integrado, este
+ * fluxo passa a ser disparado pela confirmação do pagamento.
  */
-export async function unlockReport(plate: string, method: PaymentMethod): Promise<{ receipt: UnlockReceipt; accessToken: string }> {
+export async function unlockReport(
+  plate: string,
+  method: PaymentMethod,
+  userId: string | null,
+): Promise<{ receipt: UnlockReceipt; accessToken: string }> {
   if (!getEnv().simulatedPayments) {
     throw new HttpError(501, 'payments_not_configured', 'Pagamento ainda não disponível.');
   }
@@ -49,6 +59,7 @@ export async function unlockReport(plate: string, method: PaymentMethod): Promis
     amountCents: ADVANCED_PRICE_CENTS,
     tokenHash: sha256(accessToken),
     transactionId: txId,
+    userId,
   });
   return { receipt, accessToken };
 }

@@ -44,9 +44,9 @@ Variáveis de ambiente: veja `.env.example`. Em desenvolvimento nada é obrigat�
 | Rota | Método | Auth | Descrição |
 |---|---|---|---|
 | `/api/health` | GET | — | Status, provedor e armazenamento ativos |
-| `/api/vehicle?plate=ABC1D23` | GET | — | Dados cadastrais + FIPE |
-| `/api/unlock` | POST | — | `{ plate, method: "pix" \| "cartao" }` → `{ receipt, accessToken }` |
-| `/api/report?plate=ABC1D23` | GET | `Bearer <accessToken>` | Laudo completo |
+| `/api/vehicle?plate=ABC1D23` | GET | Login | Dados cadastrais + FIPE |
+| `/api/unlock` | POST | Login | `{ plate, method: "pix" \| "cartao" }` → `{ receipt, accessToken }` |
+| `/api/report?plate=ABC1D23` | GET | Login + `X-Report-Token` | Laudo completo |
 
 Erros sempre no formato `{ "error": { "code": "...", "message": "..." } }`.
 Limite: 20 requisições/minuto por IP em cada rota (`RATE_LIMIT_PER_MINUTE`).
@@ -56,6 +56,24 @@ Limite: 20 requisições/minuto por IP em cada rota (`RATE_LIMIT_PER_MINUTE`).
 2. O app guarda o token e envia em `Authorization: Bearer` ao pedir `/api/report`.
 3. O backend valida a assinatura e a placa. Com Supabase, confere também o registro em `unlocks`
    (permite revogar em caso de estorno). O token não serve para outra placa.
+
+## Login com Google
+
+O app só abre com login Google (Supabase Auth). Consulta, desbloqueio e laudo exigem sessão válida;
+o servidor confere a assinatura do token do Supabase (`server/auth.ts`, `getClaims`).
+
+- App: `src/AuthGate.tsx` (tela de login), `src/services/auth.ts`, `src/hooks/useAuth.ts`.
+- Requisições: `Authorization: Bearer <token do login>`; o token do laudo vai em `X-Report-Token`.
+- Ao sair, o histórico e os laudos salvos no aparelho são apagados.
+- `AUTH_REQUIRED=false` desliga a exigência (ex.: testes).
+
+Configuração (uma vez):
+1. Google Cloud Console → crie um "ID do cliente OAuth" (aplicativo da Web) com o URI de redirecionamento
+   `https://rejbibahyvrjnqipsaqu.supabase.co/auth/v1/callback`.
+2. Supabase → Authentication → Sign In / Providers → Google: cole Client ID e Client Secret e ative.
+3. Supabase → Authentication → URL Configuration: Site URL `https://consulta-placa-gold.vercel.app` e
+   Redirect URLs `https://consulta-placa-gold.vercel.app/**`, `https://*-solvexati-1381.vercel.app/**`, `http://localhost:5173/**`.
+4. Vercel: `VITE_SUPABASE_PUBLISHABLE_KEY` (Production e Preview) e novo deploy.
 
 ## Supabase (opcional, recomendado em produção)
 

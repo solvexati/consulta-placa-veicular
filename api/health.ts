@@ -11,6 +11,7 @@ export const GET = route(async () => {
     provider: env.vehicleProvider,
     store: getStore().kind,
     fipe: env.fipeEnrich ? env.fipeSources : [],
+    authRequired: env.authRequired,
     simulatedPayments: env.simulatedPayments,
     time: new Date().toISOString(),
   };

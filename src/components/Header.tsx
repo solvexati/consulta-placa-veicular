@@ -1,5 +1,7 @@
 import { FileText, History, Search } from 'lucide-react';
 import PWAInstallButton from './PWAInstallButton';
+import UserMenu from './UserMenu';
+import type { AuthUser } from '../hooks/useAuth';
 import { cn } from '../utils/format';
 
 export type View = 'search' | 'history' | 'report';
@@ -10,9 +12,11 @@ interface Props {
   onNavigate: (view: View) => void;
   onReport: () => void;
   onInstalled: () => void;
+  user: AuthUser | null;
+  onSignOut: () => void;
 }
 
-export default function Header({ view, historyCount, onNavigate, onReport, onInstalled }: Props) {
+export default function Header({ view, historyCount, onNavigate, onReport, onInstalled, user, onSignOut }: Props) {
   const navItem = (active: boolean) =>
     cn(
       'tap hidden h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold md:inline-flex',
@@ -54,6 +58,7 @@ export default function Header({ view, historyCount, onNavigate, onReport, onIns
             )}
           </button>
           <PWAInstallButton onInstalled={onInstalled} />
+          {user && <UserMenu user={user} onSignOut={onSignOut} />}
         </nav>
       </div>
     </header>

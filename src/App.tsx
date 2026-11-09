@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { CircleCheck, FileText, History, Info, LoaderCircle, Search, WifiOff } from 'lucide-react';
 import Header, { type View } from './components/Header';
+import type { AuthUser } from './hooks/useAuth';
 import PlateSearchBox from './components/PlateSearchBox';
 import VehicleBasicResult from './components/VehicleBasicResult';
 import AdvancedReportView from './components/AdvancedReportView';
@@ -36,7 +37,12 @@ interface Toast {
   tone: 'success' | 'info';
 }
 
-export default function App() {
+interface AppProps {
+  user: AuthUser;
+  onSignOut: () => void;
+}
+
+export default function App({ user, onSignOut }: AppProps) {
   const [view, setView] = useState<View>('search');
   const [record, setRecord] = useState<CachedRecord | null>(null);
   const [loading, setLoading] = useState(false);
@@ -220,6 +226,8 @@ export default function App() {
         onNavigate={(v) => (v === 'search' ? goSearch() : navigate(v))}
         onReport={openReportOrCheckout}
         onInstalled={() => showToast('App instalado com sucesso!', 'success')}
+        user={user}
+        onSignOut={onSignOut}
       />
 
       {!online && (

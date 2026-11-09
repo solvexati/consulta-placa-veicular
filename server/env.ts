@@ -33,8 +33,13 @@ export function getEnv() {
       .map((s) => s.trim().toLowerCase())
       .filter(Boolean),
 
-    supabaseUrl: e.SUPABASE_URL ?? '',
+    supabaseUrl: e.SUPABASE_URL || e.VITE_SUPABASE_URL || 'https://rejbibahyvrjnqipsaqu.supabase.co',
     supabaseServiceRoleKey: e.SUPABASE_SERVICE_ROLE_KEY ?? '',
+    /** Chave pública do Supabase — a mesma do app (basta definir VITE_SUPABASE_PUBLISHABLE_KEY). */
+    supabasePublishableKey: e.SUPABASE_PUBLISHABLE_KEY || e.VITE_SUPABASE_PUBLISHABLE_KEY || '',
+
+    /** Exigir login Google em todas as rotas de consulta (padrão: true). */
+    authRequired: bool(e.AUTH_REQUIRED, true),
 
     /** Validade do cache dos dados básicos (horas). */
     basicCacheHours: num(e.CACHE_BASIC_TTL_HOURS, 24 * 7),

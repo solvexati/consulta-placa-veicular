@@ -75,10 +75,16 @@ export function getBearerToken(req: Request): string | null {
   return match ? match[1].trim() : null;
 }
 
-/** Aplica o limite de requisições por IP; lança 429 se excedido. */
-export function enforceRateLimit(req: Request, bucket: string): void {
+/** Token de acesso a um laudo desbloqueado (header X-Report-Token). */
+export function getReportToken(req: Request): string | null {
+  return req.headers.get('x-report-token')?.trim() || null;
+}
+
+/** Aplica o limite de requisições por usuário (ou por IP, sem login); lança 429 se excedido. */
+export function enforceRateLimit(req: Request, bucket: string, userId?: string | null): void {
   const { rateLimitPerMinute } = getEnv();
-  const result = checkRateLimit(`${bucket}:${getClientIp(req)}`, rateLimitPerMinute, 60_000);
+  const who = userId ? `u:${userId}` : `ip:${getClientIp(req)}`;
+  const result = checkRateLimit(`${bucket}:${who}`, rateLimitPerMinute, 60_000);
   if (!result.allowed) {
     throw new HttpError(429, 'rate_limited', 'Muitas consultas em pouco tempo. Aguarde um instante.', {
       'retry-after': String(Math.ceil(result.retryAfterMs / 1000)),

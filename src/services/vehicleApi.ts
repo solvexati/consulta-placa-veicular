@@ -7,6 +7,7 @@ import type {
   VehicleResponse,
 } from '../../shared/apiContract';
 import type { AdvancedReport, PaymentMethod, VehicleBasic } from '../../shared/vehicle';
+import { getAccessToken, signOut } from './auth';
 
 /** URL base do backend. Vazio = mesma origem (Vercel serve app e /api juntos). */
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? '';
@@ -26,11 +27,16 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   let res: Response;
+  const userToken = await getAccessToken();
   try {
     res = await fetch(`${API_BASE}${path}`, {
       ...init,
       signal: controller.signal,
-      headers: { accept: 'application/json', ...init.headers },
+      headers: {
+        accept: 'application/json',
+        ...(userToken ? { authorization: `Bearer ${userToken}` } : {}),
+        ...init.headers,
+      },
     });
   } catch (err) {
     if ((err as Error).name === 'AbortError') {
@@ -44,6 +50,8 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const body = (await res.json().catch(() => null)) as T | ApiErrorBody | null;
   if (!res.ok) {
     const e = (body as ApiErrorBody | null)?.error;
+    // Sessão expirada/inválida: volta para a tela de login
+    if (e?.code === 'unauthenticated') void signOut();
     throw new ApiError(e?.code ?? 'internal_error', e?.message ?? `Erro ${res.status} no servidor.`, res.status);
   }
   return body as T;
@@ -79,7 +87,7 @@ export async function unlockVehicleReport(plate: string, method: PaymentMethod):
 export function fetchVehicleReport(plate: string, accessToken: string): Promise<AdvancedReport> {
   return once(`report:${plate}`, async () => {
     const r = await request<ReportResponse>(`/api/report?plate=${encodeURIComponent(plate)}`, {
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { 'x-report-token': accessToken },
     });
     return r.report;
   });

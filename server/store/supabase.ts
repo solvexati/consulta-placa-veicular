@@ -62,6 +62,7 @@ export function createSupabaseStore(url: string, serviceRoleKey: string): Store 
           amount_cents: u.amountCents,
           token_hash: u.tokenHash,
           transaction_id: u.transactionId,
+          user_id: u.userId,
           status: 'paid',
         })
         .select('plate, method, amount_cents, transaction_id, created_at')
@@ -100,7 +101,7 @@ export function createSupabaseStore(url: string, serviceRoleKey: string): Store 
     async logLookup(log) {
       const { error } = await db
         .from('lookup_logs')
-        .insert({ plate: log.plate, kind: log.kind, source: log.source, provider: log.provider, ip_hash: log.ipHash });
+        .insert({ plate: log.plate, kind: log.kind, source: log.source, provider: log.provider, ip_hash: log.ipHash, user_id: log.userId });
       if (error) console.warn('[store] falha ao gravar log de consulta', error.message);
     },
   };

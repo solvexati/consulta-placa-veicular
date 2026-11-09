@@ -120,3 +120,14 @@ export function removeUnlock(plate: string): void {
   delete unlocks[plate];
   write(UNLOCKS_KEY, unlocks);
 }
+
+/** Apaga histórico, laudos e cache do aparelho (usado ao sair da conta). */
+export function clearLocalData(): void {
+  for (const key of [HISTORY_KEY, UNLOCKS_KEY, RECORDS_KEY]) {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      /* armazenamento indisponível */
+    }
+  }
+}

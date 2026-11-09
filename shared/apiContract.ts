@@ -18,6 +18,7 @@ export type ApiErrorCode =
   | 'invalid_body'
   | 'method_not_allowed'
   | 'not_found'
+  | 'unauthenticated'
   | 'unauthorized'
   | 'rate_limited'
   | 'payments_not_configured'
@@ -40,11 +41,11 @@ export interface UnlockRequest {
 
 export interface UnlockResponse {
   receipt: UnlockReceipt;
-  /** Token de acesso ao laudo. Enviar como `Authorization: Bearer <token>`. */
+  /** Token de acesso ao laudo. Enviar no header `X-Report-Token`. */
   accessToken: string;
 }
 
-/** GET /api/report?plate=ABC1D23 + Authorization: Bearer <token> — laudo completo. */
+/** GET /api/report?plate=ABC1D23 + X-Report-Token: <token> — laudo completo. */
 export interface ReportResponse {
   plate: string;
   report: AdvancedReport;
@@ -60,6 +61,8 @@ export interface HealthResponse {
   store: 'supabase' | 'memory';
   /** Fontes de preço FIPE oficial ativas (vazio = desligado). */
   fipe: string[];
+  /** Login Google obrigatório nas rotas da API. */
+  authRequired: boolean;
   simulatedPayments: boolean;
   time: string;
 }

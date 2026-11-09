@@ -15,6 +15,8 @@ export interface NewUnlock {
   amountCents: number;
   tokenHash: string;
   transactionId: string;
+  /** Usuário (login Google) que comprou o laudo. */
+  userId: string | null;
 }
 
 export interface LookupLog {
@@ -24,6 +26,7 @@ export interface LookupLog {
   /** Qual API respondeu (essencial para comparar custos ao trocar de API). */
   provider: string;
   ipHash: string;
+  userId: string | null;
 }
 
 /** Persistência do backend. Implementações: Supabase (produção) e memória (dev/fallback). */
