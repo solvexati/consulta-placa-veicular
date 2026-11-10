@@ -36,11 +36,14 @@ export function getEnv() {
     supabaseUrl: e.SUPABASE_URL || e.VITE_SUPABASE_URL || 'https://rejbibahyvrjnqipsaqu.supabase.co',
     supabaseServiceRoleKey: e.SUPABASE_SERVICE_ROLE_KEY ?? '',
     /** Chave pública do Supabase — a mesma do app (basta definir VITE_SUPABASE_PUBLISHABLE_KEY). */
-    supabasePublishableKey: e.SUPABASE_PUBLISHABLE_KEY || e.VITE_SUPABASE_PUBLISHABLE_KEY || '',
+    supabasePublishableKey:
+      e.SUPABASE_PUBLISHABLE_KEY || e.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_EGKNNp1anTrWSunepGd2Nw_EVQu4U-V',
 
-    /** Exigir login Google em todas as rotas de consulta (padrão: true). */
-    //  (desligado automaticamente enquanto a chave pública não estiver configurada)
-    authRequired: bool(e.AUTH_REQUIRED, true) && Boolean(e.SUPABASE_PUBLISHABLE_KEY || e.VITE_SUPABASE_PUBLISHABLE_KEY),
+    /**
+     * Exigir login Google nas rotas de consulta (padrão: true). Na prática só passa
+     * a valer quando o provedor Google estiver ATIVADO no painel do Supabase.
+     */
+    authRequired: bool(e.AUTH_REQUIRED, true),
 
     /** Validade do cache dos dados básicos (horas). */
     basicCacheHours: num(e.CACHE_BASIC_TTL_HOURS, 24 * 7),

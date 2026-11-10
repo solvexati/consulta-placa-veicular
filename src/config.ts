@@ -7,6 +7,7 @@
 export const SUPABASE_URL =
   (import.meta.env.VITE_SUPABASE_URL as string | undefined) || 'https://rejbibahyvrjnqipsaqu.supabase.co';
 
-export const SUPABASE_PUBLISHABLE_KEY = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) || '';
+export const SUPABASE_PUBLISHABLE_KEY =
+  (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) || 'sb_publishable_EGKNNp1anTrWSunepGd2Nw_EVQu4U-V';
 
 export const isAuthConfigured = Boolean(SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY);

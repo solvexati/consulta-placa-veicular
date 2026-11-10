@@ -2,6 +2,7 @@ import type { HealthResponse } from '../shared/apiContract.js';
 import { getEnv } from '../server/env.js';
 import { json, methodNotAllowed, route } from '../server/http.js';
 import { getStore } from '../server/store/index.js';
+import { isLoginActive } from '../server/auth.js';
 
 /** GET /api/health — status do backend e configuração ativa. */
 export const GET = route(async () => {
@@ -11,7 +12,7 @@ export const GET = route(async () => {
     provider: env.vehicleProvider,
     store: getStore().kind,
     fipe: env.fipeEnrich ? env.fipeSources : [],
-    authRequired: env.authRequired,
+    authRequired: env.authRequired && (await isLoginActive()),
     simulatedPayments: env.simulatedPayments,
     time: new Date().toISOString(),
   };
